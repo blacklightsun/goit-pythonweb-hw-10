@@ -1,14 +1,28 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from app.api import deps
 from app.schemas.user import UserCreate, UserUpdate, UserResponse
 from app.crud import crud_users
+from app.models.user import User
+from app.services.auth import get_current_user
+from app.core.limiter import limiter  # Імпорт лімітеру з main.py
 
-# Оголошення
 router = APIRouter()
 
+# Endpoint для отримання інформації про поточного користувача з лімітом запитів
+@router.get("/me", response_model=UserResponse)
+@limiter.limit("5/minute")  # 👈 ОБМЕЖЕННЯ: 5 запитів на хвилину
+async def read_users_me(
+    request: Request, # 👈 ОБОВ'ЯЗКОВО для роботи лімітера!
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Повертає профіль поточного користувача.
+    Ліміт: 5 запитів на хвилину.
+    """
+    return current_user
 
 # 1. GET (Read All)
 @router.get("/", response_model=List[UserResponse])
