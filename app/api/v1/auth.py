@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from app.api.deps import get_db
+from app.db.deps import get_db
 from app.models.user import User
 from app.services.auth import create_access_token, verify_password
 from app.schemas.token import Token # Створіть просту схему {access_token: str, token_type: str}

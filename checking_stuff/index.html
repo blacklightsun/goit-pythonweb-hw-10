@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h1>CORS Test</h1>
+<button onclick="testCORS()">Test Request</button>
+<script>
+async function testCORS() {
+    try {
+        // Замініть на свій реальний шлях
+        const response = await fetch('http://127.0.0.1:8000/docs'); 
+        console.log("Status:", response.status);
+        alert("Success! CORS is working.");
+    } catch (error) {
+        console.error(error);
+        alert("CORS error (see console)");
+    }
+}
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
-from app.enums import UserRole
+from app.core.enums import UserRole
 
 
 # Базовий клас (спільні поля)

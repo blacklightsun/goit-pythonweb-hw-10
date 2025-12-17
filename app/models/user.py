@@ -3,11 +3,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Enum
 
 from app.db.base_class import Base
-from app.enums import UserRole
+from app.core.enums import UserRole
 # from app.models.contact import Contact
 
 
-# на майбутнє - використання для аутентифікації користувачів
 class User(Base):
     __tablename__ = "users"
 

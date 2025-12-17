@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
-from app.api import deps
+from app.db import deps
 from app.schemas.user import UserCreate, UserUpdate, UserResponse
 from app.crud import crud_users
 from app.models.user import User
