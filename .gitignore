@@ -1,0 +1,17 @@
+.git/
+.venv/
+__pycache__/
+*.pyc
+.env
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+coverage.xml
+htmlcov/
+*.log
+pg_data/
+bin/
+
+# IDE specific files
+.vscode/
+
