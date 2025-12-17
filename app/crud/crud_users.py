@@ -3,6 +3,7 @@ from sqlalchemy.future import select
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
+from app.services.auth import get_password_hash
 
 
 # --- READ (Get All) ---
@@ -16,7 +17,12 @@ async def get_users(db: AsyncSession, skip: int = 0, limit: int = 10):
 # --- CREATE ---
 async def create_user(db: AsyncSession, user_in: UserCreate):
     # Створюємо об'єкт моделі
-    # Тут треба хешувати пароль, але для спрощення поки пишемо plain text
+    # 👇 ДОДАЙТЕ ЦЕЙ БЛОК ДЛЯ ПЕРЕВІРКИ 👇
+    print(f"DEBUG: Type of password: {type(user_in.password)}")
+    print(f"DEBUG: Password length: {len(user_in.password)}")
+    print(f"DEBUG: Password content: {user_in.password}")
+    # 👆 ------------------------------- 👆
+    hashed_password = get_password_hash(user_in.password)
 
     db_user = await get_user_by_username(db, user_in.username)
     if db_user:
@@ -24,7 +30,7 @@ async def create_user(db: AsyncSession, user_in: UserCreate):
 
     db_user = User(
         username=user_in.username,
-        password_hash=user_in.password + "_hashed",  # Тимчасове хешування
+        password_hash=hashed_password, 
         role=user_in.role,
     )
     db.add(db_user)

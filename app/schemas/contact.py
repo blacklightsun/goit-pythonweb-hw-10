@@ -10,7 +10,7 @@ class ContactCreate(BaseModel):
     phone_number: str
     birthday: date
     other_details: str
-    owner_id: int
+    # owner_id: int
 
 
 class ContactUpdate(BaseModel):

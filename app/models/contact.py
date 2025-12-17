@@ -12,8 +12,8 @@ class Contact(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     firstname: Mapped[str] = mapped_column(String(50))
     lastname: Mapped[str] = mapped_column(String(50))
-    email: Mapped[str] = mapped_column(String(120), unique=True)
-    phone_number: Mapped[str] = mapped_column(String(20), unique=True)
+    email: Mapped[str] = mapped_column(String(120), unique=False)
+    phone_number: Mapped[str] = mapped_column(String(20), unique=False)
     birthday: Mapped[date] = mapped_column(Date)  # Format: YYYY-MM-DD
     other_details: Mapped[str] = mapped_column(String(250))
     owner_id: Mapped[int] = mapped_column(

@@ -6,23 +6,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.models.contact import Contact
+from app.models.user import User
 from app.schemas.contact import ContactCreate, ContactUpdate
 
 
 # --- READ (Get All) ---
-async def get_contacts(db: AsyncSession, skip: int = 0, limit: int = 10):
-    stmt = select(Contact).offset(skip).limit(limit)
+async def get_contacts(db: AsyncSession, user: User, skip: int = 0, limit: int = 10):
+    stmt = select(Contact).where(Contact.owner_id == user.id).offset(skip).limit(limit)
     result = await db.execute(stmt)
     return result.scalars().all()
 
 
 # --- CREATE ---
-async def create_contact(db: AsyncSession, contact_in: ContactCreate):
+async def create_contact(db: AsyncSession, contact_in: ContactCreate, user: User):
     """Створює новий контакт у базі даних"""
-    if await check_contact_email_exists_for_creating(db, contact_in.email):
+    if await check_contact_email_exists_for_creating(db, contact_in.email, user):
         return None
 
-    if await check_contact_phone_exists_for_creating(db, contact_in.phone_number):
+    if await check_contact_phone_exists_for_creating(db, contact_in.phone_number, user):
         return None
 
     # Створюємо об'єкт моделі
@@ -34,7 +35,7 @@ async def create_contact(db: AsyncSession, contact_in: ContactCreate):
         phone_number=contact_in.phone_number,
         birthday=contact_in.birthday,
         other_details=contact_in.other_details,
-        owner_id=contact_in.owner_id,
+        owner_id=user.id,
     )
     db.add(db_contact)
     await db.commit()  # Зберігаємо в БД
@@ -43,25 +44,27 @@ async def create_contact(db: AsyncSession, contact_in: ContactCreate):
 
 
 # --- READ (Get By ID) ---
-async def get_contact(db: AsyncSession, contact_id: int):
-    return await db.get(Contact, contact_id)
+async def get_contact(db: AsyncSession, contact_id: int, user: User):
+    stmt = select(Contact).where(Contact.id == contact_id, Contact.owner_id == user.id)
+    result = await db.execute(stmt)
+    return result.scalars().first()
 
 
 # --- UPDATE ---
 async def update_contact(
-    db: AsyncSession, contact_id: int, contact_update: ContactUpdate
+    db: AsyncSession, contact_id: int, contact_update: ContactUpdate, user: User
 ):
     # Спочатку знаходимо об'єкт
-    db_contact = await get_contact(db, contact_id)
+    db_contact = await get_contact(db, contact_id, user)
     if not db_contact:
         return None
 
     if contact_update.email:
-        if await check_contact_email_exists_for_updating(db, contact_update.email, contact_id):
+        if await check_contact_email_exists_for_updating(db, contact_update.email, contact_id, user):
             return None
 
     if contact_update.phone_number:
-        if await check_contact_phone_exists_for_updating(db, contact_update.phone_number, contact_id):
+        if await check_contact_phone_exists_for_updating(db, contact_update.phone_number, contact_id, user):
             return None
 
     # Оновлюємо тільки ті поля, які прийшли (exclude_unset=True)
@@ -76,8 +79,8 @@ async def update_contact(
 
 
 # --- DELETE ---
-async def delete_contact(db: AsyncSession, contact_id: int):
-    db_contact = await get_contact(db, contact_id)
+async def delete_contact(db: AsyncSession, contact_id: int, user: User):
+    db_contact = await get_contact(db, contact_id, user)
     if not db_contact:
         return None
 
@@ -88,10 +91,11 @@ async def delete_contact(db: AsyncSession, contact_id: int):
 
 # --- READ (Get All by query) ---
 async def get_contacts_by_query(
-    db: AsyncSession, query: str, skip: int = 0, limit: int = 10
+    db: AsyncSession, query: str, user: User, skip: int = 0, limit: int = 10
 ):
     stmt = (
         select(Contact)
+        .where(Contact.owner_id == user.id)  # Фільтр за власником, якщо потрібно
         .where(
             (Contact.firstname.ilike(f"%{query}%"))
             | (Contact.lastname.ilike(f"%{query}%"))
@@ -135,7 +139,13 @@ async def get_contacts_by_query(
 #     return upcoming_birthdays
 
 
-async def get_contacts_by_birthdays(db: AsyncSession, days_ahead: int = 7, skip: int = 0, limit: int = 100):
+async def get_contacts_by_birthdays(
+        db: AsyncSession, 
+        user: User,
+        days_ahead: int = 7, 
+        skip: int = 0, 
+        limit: int = 100
+        ):
     today = date.today()
     end_date = today + timedelta(days=days_ahead)
 
@@ -155,6 +165,7 @@ async def get_contacts_by_birthdays(db: AsyncSession, days_ahead: int = 7, skip:
 
     stmt = (
         select(Contact)
+        .where(Contact.owner_id == user.id)
         .where(next_birthday.between(func.current_date(), bindparam("end_date")))
         .order_by(next_birthday)
         .offset(skip)
@@ -167,28 +178,36 @@ async def get_contacts_by_birthdays(db: AsyncSession, days_ahead: int = 7, skip:
 
 
 
-async def check_contact_email_exists_for_creating(db: AsyncSession, email: str | None) -> bool:
-    stmt = select(Contact).where(Contact.email == email)
+async def check_contact_email_exists_for_creating(db: AsyncSession, email: str | None, user: User) -> bool:
+    stmt = select(Contact) \
+    .where(Contact.owner_id == user.id) \
+    .where(Contact.email == email)
     result = await db.execute(stmt)
     contact = result.scalars().first()
     return contact is not None
 
 
-async def check_contact_phone_exists_for_creating(db: AsyncSession, phone: str | None) -> bool:
-    stmt = select(Contact).where(Contact.phone_number == phone)
+async def check_contact_phone_exists_for_creating(db: AsyncSession, phone: str | None, user: User) -> bool:
+    stmt = select(Contact) \
+    .where(Contact.owner_id == user.id) \
+    .where(Contact.phone_number == phone,)
     result = await db.execute(stmt)
     contact = result.scalars().first()
     return contact is not None
 
-async def check_contact_email_exists_for_updating(db: AsyncSession, email: str | None, contact_id: int) -> bool:
-    stmt = select(Contact).where(Contact.email == email, Contact.id != contact_id)
+async def check_contact_email_exists_for_updating(db: AsyncSession, email: str | None, contact_id: int, user: User) -> bool:
+    stmt = select(Contact) \
+    .where(Contact.owner_id == user.id) \
+    .where(Contact.email == email, Contact.id != contact_id,)
     result = await db.execute(stmt)
     contact = result.scalars().first()
     return contact is not None
 
 
-async def check_contact_phone_exists_for_updating(db: AsyncSession, phone: str | None, contact_id: int) -> bool:
-    stmt = select(Contact).where(Contact.phone_number == phone, Contact.id != contact_id)
+async def check_contact_phone_exists_for_updating(db: AsyncSession, phone: str | None, contact_id: int, user: User) -> bool:
+    stmt = select(Contact) \
+    .where(Contact.owner_id == user.id) \
+    .where(Contact.phone_number == phone, Contact.id != contact_id,)
     result = await db.execute(stmt)
     contact = result.scalars().first()
     return contact is not None
