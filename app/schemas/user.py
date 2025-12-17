@@ -1,11 +1,15 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
+from app.enums import UserRole
+
 
 # Базовий клас (спільні поля)
 class UserBase(BaseModel):
     username: str
-    role: str
+    role: UserRole = UserRole.USER
+    # role: str #old version without enum
+    avatar: Optional[str] = None
 
 
 # Схема для створення (POST) - пароль обов'язковий
@@ -18,7 +22,8 @@ class UserCreate(UserBase):
 # Схема для оновлення (PATCH) - всі поля опціональні
 class UserUpdate(BaseModel):
     username: Optional[str] = None
-    role: Optional[str] = None
+    role: Optional[UserRole] = None # old version without enum
+    # role: Optional[str] = None
 
 
 # Схема для відповіді (GET) - повертаємо ID, але приховуємо пароль

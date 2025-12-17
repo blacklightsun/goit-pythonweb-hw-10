@@ -1,10 +1,10 @@
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Enum
 
 from app.db.base_class import Base
+from app.enums import UserRole
 # from app.models.contact import Contact
-
-
 
 
 # на майбутнє - використання для аутентифікації користувачів
@@ -12,7 +12,16 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    role: Mapped[str] = mapped_column(String(20))
+    # Використовуємо наш Enum як тип колонки
+    # default=UserRole.USER означає, що якщо роль не вказана, це буде звичайний юзер
+    role: Mapped[UserRole] = mapped_column(Enum(
+        UserRole, 
+        name="userrole",  # Назва типу в Postgres (має збігатися з міграцією!)
+        create_type=False, # Тип вже створений міграцією, не намагайся створити знову
+        # 👇 ОСЬ ГОЛОВНЕ ВИПРАВЛЕННЯ 👇
+        values_callable=lambda obj: [e.value for e in obj]
+        ), default=UserRole.USER)
+    # role: Mapped[str] = mapped_column(String(20)) #old version without enum
     username: Mapped[str] = mapped_column(String(50), unique=True)
     password_hash: Mapped[str] = mapped_column(String(128))
     avatar: Mapped[str] = mapped_column(String(255), nullable=True)
