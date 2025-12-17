@@ -12,24 +12,18 @@ from app.core.limiter import limiter
 app = FastAPI(title=settings.PROJECT_NAME)
 
 # --- НАЛАШТУВАННЯ CORS ---
-
-# Список доменів, яким дозволено стукатись до вашого API.
-# Для розробки зазвичай додають порти локалхоста, де живе фронтенд.
-origins = [
-    "http://localhost:3000", # React / Next.js
-    "http://localhost:5173", # Vite (Vue / React)
-    "http://localhost:8080", # Стандартний порт для багатьох фронтендів
-    "http://127.0.0.1:3000",
-    # "*"  # ⚠️ Можна використати "*", щоб дозволити всім, але це небезпечно для продакшену
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,         # Яким доменам можна (список вище)
-    allow_credentials=True,        # ⚠️ ВАЖЛИВО: Дозволяє передавати куки та Authorization хедери (JWT)
-    allow_methods=["*"],           # Дозволяємо всі методи: GET, POST, PUT, DELETE, OPTIONS...
-    allow_headers=["*"],           # Дозволяємо всі заголовки (Content-Type, Authorization...)
+    # 👇 Перетворюємо URL-об'єкти назад у рядки
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
+for origin in settings.BACKEND_CORS_ORIGINS:
+    print(f"CORS origin allowed: {origin}")
+
 
 # --- ПІДКЛЮЧЕННЯ RATE LIMITER (те, що ми робили раніше) ---
 app.state.limiter = limiter
