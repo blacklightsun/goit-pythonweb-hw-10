@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import List, Union
-from pydantic import AnyHttpUrl, field_validator
+from typing import List
+from pydantic import field_validator
 
 
 class Settings(BaseSettings):
@@ -30,6 +30,17 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
 
+    MAIL_USERNAME: str
+    MAIL_PASSWORD: str
+    MAIL_FROM: str
+    MAIL_PORT: int
+    MAIL_SERVER: str
+    MAIL_FROM_NAME: str
+    MAIL_STARTTLS: bool
+    MAIL_SSL_TLS: bool
+    USE_CREDENTIALS: bool
+    VALIDATE_CERTS: bool
+    TEMPLATE_PATH: str
 
     model_config = SettingsConfigDict(
         env_file=".env",
