@@ -39,7 +39,7 @@ async def create_user(user_in: UserCreate, db: AsyncSession = Depends(deps.get_d
     # Тут можна додати перевірку, чи існує вже такий email
     user = await crud_users.create_user(db, user_in)
     if not user:
-        raise HTTPException(status_code=409, detail="User already exists")
+        raise HTTPException(status_code=409, detail="User or email already exists")
     return user
 
 
@@ -59,7 +59,7 @@ async def update_user(
 ):
     user = await crud_users.update_user(db, user_id, user_update)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="User not found or email already exists")
     return user
 
 

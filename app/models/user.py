@@ -1,6 +1,5 @@
-from sqlalchemy import Integer, String
+from sqlalchemy import Integer, String, Boolean, Enum, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Enum
 
 from app.db.base_class import Base
 from app.core.enums import UserRole
@@ -27,6 +26,8 @@ class User(Base):
     contacts: Mapped[list["Contact"]] = relationship(
         "Contact", back_populates="owner", cascade="all, delete-orphan"
     )
+    email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    confirmed: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"), nullable=False)
 
     def __repr__(self) -> str:
         return f"User(id={self.id!r}, username={self.username!r}, role={self.role!r}, avatar={self.avatar!r})"

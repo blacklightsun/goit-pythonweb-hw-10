@@ -1,7 +1,3 @@
-SELECT id,
-       role,
-       username,
-       password_hash,
-       avatar
+SELECT *
 FROM public.users
 LIMIT 1000;

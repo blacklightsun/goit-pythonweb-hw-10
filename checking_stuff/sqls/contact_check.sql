@@ -1,10 +1,3 @@
-SELECT id,
-       firstname,
-       lastname,
-       email,
-       phone_number,
-       birthday,
-       other_details,
-       owner_id
+SELECT *
 FROM public.contacts
 LIMIT 1000;

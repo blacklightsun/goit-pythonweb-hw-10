@@ -27,11 +27,17 @@ async def create_user(db: AsyncSession, user_in: UserCreate):
     db_user = await get_user_by_username(db, user_in.username)
     if db_user:
         return None
+    
+    db_user = await get_user_by_email(db, user_in.email)
+    if db_user:
+        return None
 
     db_user = User(
         username=user_in.username,
+        email=user_in.email,
         password_hash=hashed_password, 
         role=user_in.role,
+        avatar=user_in.avatar,
     )
     db.add(db_user)
     await db.commit()  # Зберігаємо в БД
@@ -47,15 +53,23 @@ async def get_user(db: AsyncSession, user_id: int):
 
 # --- UPDATE ---
 async def update_user(db: AsyncSession, user_id: int, user_update: UserUpdate):
+
+    # Перевірка унікальності email, якщо він оновлюється
+    if user_update.email:
+        db_user = await get_user_by_email(db, user_update.email)
+        if db_user and db_user.id != user_id:
+            return None
+        
     # Спочатку знаходимо об'єкт
     db_user = await get_user(db, user_id)
     if not db_user:
         return None
-
+    
     # Оновлюємо тільки ті поля, які прийшли (exclude_unset=True)
     update_data = user_update.model_dump(exclude_unset=True)
 
     for key, value in update_data.items():
+        print(f"DEBUG: Updating {key} to {value}")  # Додатковий лог
         setattr(db_user, key, value)  # Оновлюємо атрибути об'єкта
 
     await db.commit()
@@ -80,6 +94,12 @@ async def get_user_by_username(db: AsyncSession, username: str):
     result = await db.execute(stmt)
     return result.scalars().first()
 
+
+# --- GET USER BY EMAIL ---
+async def get_user_by_email(db: AsyncSession, email: str):
+    stmt = select(User).where(User.email == email)
+    result = await db.execute(stmt)
+    return result.scalars().first()
 
 # # --- AUTHENTICATE USER ---
 # async def authenticate_user(db: AsyncSession, username: str, password: str):

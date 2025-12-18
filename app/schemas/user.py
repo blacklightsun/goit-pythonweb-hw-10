@@ -8,30 +8,28 @@ from app.core.enums import UserRole
 class UserBase(BaseModel):
     username: str
     role: UserRole = UserRole.USER
-    # role: str #old version without enum
     avatar: Optional[str] = None
+    email: str
+    # confirmed: Optional[bool] = False
 
 
 # Схема для створення (POST) - пароль обов'язковий
 class UserCreate(UserBase):
-    # username: str
-    # role: str
     password: str
 
 
 # Схема для оновлення (PATCH) - всі поля опціональні
 class UserUpdate(BaseModel):
-    username: Optional[str] = None
+    # username: Optional[str] = None
     role: Optional[UserRole] = None # old version without enum
-    # role: Optional[str] = None
+    email: Optional[str] = None
+    avatar: Optional[str] = None
+    # confirmed: Optional[bool] = False
 
 
 # Схема для відповіді (GET) - повертаємо ID, але приховуємо пароль
 class UserResponse(UserBase):
     id: int
-    # username: str
-    # # password_hash: str
-    # role: str
 
     # Цей конфіг дозволяє Pydantic читати дані прямо з ORM-об'єктів SQLAlchemy
     model_config = ConfigDict(from_attributes=True)
