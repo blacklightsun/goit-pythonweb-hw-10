@@ -36,7 +36,7 @@ async def create_user(db: AsyncSession, user_in: UserCreate):
         username=user_in.username,
         email=user_in.email,
         password_hash=hashed_password, 
-        role=user_in.role,
+        # role=user_in.role,
         avatar=user_in.avatar,
     )
     db.add(db_user)
@@ -101,26 +101,37 @@ async def get_user_by_email(db: AsyncSession, email: str):
     result = await db.execute(stmt)
     return result.scalars().first()
 
-# # --- AUTHENTICATE USER ---
-# async def authenticate_user(db: AsyncSession, username: str, password: str):
-#     stmt = select(User).where(User.username == username)
-#     result = await db.execute(stmt)
-#     user = result.scalars().first()
-#     if user and user.password_hash == password + '_hashed':  # Тимчасова перевірка
-#         return user
-#     return None
+
+# --- CHANGE USER ROLE ---
+async def change_user_role(db: AsyncSession, user_id: int, new_role: str) -> User | None:
+    db_user = await get_user(db, user_id)
+    if not db_user:
+        return None
+
+    if db_user.role == new_role:
+        return db_user  # Роль вже встановлена, нічого не змінюємо
+    
+    db_user.role = new_role
+    await db.commit()
+    await db.refresh(db_user)
+    return db_user
 
 
-# # --- CHANGE USER ROLE ---
-# async def change_user_role(db: AsyncSession, user_id: int, new_role: str):
-#     db_user = await get_user(db, user_id)
-#     if not db_user:
-#         return None
+async def confirmed_email(db: AsyncSession, db_user: User) -> User | None:
+    db_user.confirmed = True
+    await db.commit()
+    await db.refresh(db_user)
+    return db_user
 
-#     db_user.role = new_role
-#     await db.commit()
-#     await db.refresh(db_user)
-#     return db_user
+async def unconfirmed_email(db: AsyncSession, db_user: User) -> User | None:
+    db_user.confirmed = False
+    await db.commit()
+    await db.refresh(db_user)
+    return db_user
+
+
+
+
 
 # # --- GET USERS BY ROLE ---
 # async def get_users_by_role(db: AsyncSession, role: str, skip: int = 0, limit: int = 10):

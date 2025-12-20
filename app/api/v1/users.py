@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException, status, Request, BackgroundTasks
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import deps
 from app.schemas.user import UserCreate, UserUpdate, UserResponse
@@ -8,6 +9,7 @@ from app.crud import crud_users
 from app.models.user import User
 from app.services.auth import get_current_user
 from app.core.limiter import limiter  # Імпорт лімітеру з main.py
+from app.services.verify_email import send_verifying_email
 
 router = APIRouter()
 
@@ -33,14 +35,14 @@ async def read_users(
     return users
 
 
-# 2. POST (Create)
-@router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def create_user(user_in: UserCreate, db: AsyncSession = Depends(deps.get_db)):
-    # Тут можна додати перевірку, чи існує вже такий email
-    user = await crud_users.create_user(db, user_in)
-    if not user:
-        raise HTTPException(status_code=409, detail="User or email already exists")
-    return user
+# # 2. POST (Create) - закрито можливість створюати юзерів через цей ендпоінт - тільки через реєстрацію
+# @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+# async def create_user(user_in: UserCreate, db: AsyncSession = Depends(deps.get_db)):
+#     # Тут можна додати перевірку, чи існує вже такий email
+#     user = await crud_users.create_user(db, user_in)
+#     if not user:
+#         raise HTTPException(status_code=409, detail="User or email already exists")
+#     return user
 
 
 # 3. GET (Read One)
@@ -55,10 +57,23 @@ async def read_user(user_id: int, db: AsyncSession = Depends(deps.get_db)):
 # 4. PATCH (Update) - використовуємо PATCH для часткового оновлення
 @router.patch("/{user_id}", response_model=UserResponse)
 async def update_user(
-    user_id: int, user_update: UserUpdate, db: AsyncSession = Depends(deps.get_db)
+    user_id: int, 
+    user_update: UserUpdate, 
+    background_tasks: BackgroundTasks,
+    request: Request,
+    db: AsyncSession = Depends(deps.get_db),
 ):
     user = await crud_users.update_user(db, user_id, user_update)
-    if not user:
+
+    # Якщо оновлення пройшло успішно, і повернувся юзер, перевіряємо чи оновлювався email
+    # Якщо так, відмічаємо email як непідтверджений і надсилаємо лист для підтвердження
+    if user:
+        if user_update.email:
+            await crud_users.unconfirmed_email(db, user)
+            background_tasks.add_task(
+                send_verifying_email, user.email, user.username, str(request.base_url)
+            )
+    else:
         raise HTTPException(status_code=404, detail="User not found or email already exists")
     return user
 
