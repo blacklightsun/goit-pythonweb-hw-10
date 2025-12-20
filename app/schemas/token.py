@@ -7,7 +7,5 @@ class Token(BaseModel):
     token_type: str
 
 # 2. Схема для ПЕЙЛОАДУ (те, що зашито всередині токена)
-# Це знадобиться нам пізніше, коли ми будемо розшифровувати токен,
-# щоб переконатися, що там є username.
 class TokenData(BaseModel):
     username: Optional[str] = None

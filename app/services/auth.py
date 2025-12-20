@@ -24,7 +24,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 # --- ФУНКЦІЇ ХЕШУВАННЯ ---
-
 def verify_password(plain_password, hashed_password):
     """Перевіряє, чи співпадає звичайний пароль з хешем"""
     return pwd_context.verify(plain_password, hashed_password)
@@ -34,7 +33,6 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 # --- ФУНКЦІЇ ТОКЕНІВ ---
-
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Створює JWT токен з даними (payload)"""
     to_encode = data.copy()
@@ -83,9 +81,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     except JWTError:
         raise credentials_exception
 
-    # Шукаємо юзера в базі (тут треба адаптувати під ваш код, якщо він асинхронний)
-    # Припускаємо, що у вас є метод для пошуку по імені
-    # Для асинхронного SQLAlchemy:
     from sqlalchemy import select
     result = await db.execute(select(User).where(User.username == username))
     user = result.scalar_one_or_none()

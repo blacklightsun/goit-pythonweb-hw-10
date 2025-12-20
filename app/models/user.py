@@ -16,7 +16,6 @@ class User(Base):
         UserRole, 
         name="userrole",  # Назва типу в Postgres (має збігатися з міграцією!)
         create_type=False, # Тип вже створений міграцією, не намагайся створити знову
-        # 👇 ОСЬ ГОЛОВНЕ ВИПРАВЛЕННЯ 👇
         values_callable=lambda obj: [e.value for e in obj]
         ), default=UserRole.USER)
     # role: Mapped[str] = mapped_column(String(20)) #old version without enum

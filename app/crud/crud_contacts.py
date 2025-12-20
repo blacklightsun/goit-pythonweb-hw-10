@@ -109,35 +109,6 @@ async def get_contacts_by_query(
     return result.scalars().all()
 
 
-# --- READ (Get All Users) ---
-# async def get_contacts_by_birthdays(
-#     db: AsyncSession, days_ahead: int, skip: int = 0, limit: int = 10
-# ):
-#     from datetime import date, timedelta
-
-#     def is_birthday_within_next_seven_days(birthday_str):
-#         """Перевіряє, чи день народження (YYYY-MM-DD string) припадає на найближчі 7 днів."""
-#         # Перетворюємо рядок на об'єкт дати (використовуючи будь-який рік, наприклад, поточний)
-#         current_year = date.today().year
-#         # month_day = datetime.strptime(birthday_str, '%Y-%m-%d').replace(year=current_year).date()
-#         month_day = birthday_str.replace(year=current_year)
-
-#         today = date.today()
-#         seven_days_after = today + timedelta(days=days_ahead)
-
-#         return today <= month_day <= seven_days_after
-
-#     # Отримуємо всі контакти (або великий список) з бази даних
-#     all_contacts = await db.execute(select(Contact))
-
-#     # Фільтруємо в Python
-#     upcoming_birthdays = [
-#         contact
-#         for contact in all_contacts.scalars().all()
-#         if is_birthday_within_next_seven_days(contact.birthday)
-#     ]
-#     return upcoming_birthdays
-
 
 async def get_contacts_by_birthdays(
         db: AsyncSession, 
@@ -174,8 +145,6 @@ async def get_contacts_by_birthdays(
 
     result = await db.execute(stmt.params(end_date=end_date))
     return result.scalars().all()
-
-
 
 
 async def check_contact_email_exists_for_creating(db: AsyncSession, email: str | None, user: User) -> bool:

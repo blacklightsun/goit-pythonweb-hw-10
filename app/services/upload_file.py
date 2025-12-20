@@ -33,7 +33,7 @@ class UploadFileService:
         )
         return r["secure_url"]
 
-# Створюємо екземпляр сервісу (можна тут, або через Depends)
+# Створюємо екземпляр сервісу
 upload_service = UploadFileService(
     settings.CLOUDINARY_NAME, 
     settings.CLOUDINARY_API_KEY, 
