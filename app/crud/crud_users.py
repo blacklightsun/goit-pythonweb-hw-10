@@ -130,7 +130,17 @@ async def unconfirmed_email(db: AsyncSession, db_user: User) -> User | None:
     return db_user
 
 
-
+async def update_avatar(db: AsyncSession, user: User, url: str) -> User:
+    """
+    Оновлює лише посилання на аватар для конкретного користувача.
+    """
+    user.avatar = url
+    # db.add не обов'язково, якщо об'єкт user вже "прив'язаний" до сесії,
+    # але для надійності можна залишити.
+    db.add(user) 
+    await db.commit()
+    await db.refresh(user) # Оновлюємо об'єкт даними з БД
+    return user
 
 
 # # --- GET USERS BY ROLE ---

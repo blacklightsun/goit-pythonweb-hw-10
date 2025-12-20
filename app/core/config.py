@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     VALIDATE_CERTS: bool
     TEMPLATE_PATH: str
 
+    CLOUDINARY_NAME: str
+    CLOUDINARY_API_KEY: str
+    CLOUDINARY_API_SECRET: str
+
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

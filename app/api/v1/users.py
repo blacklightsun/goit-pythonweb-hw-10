@@ -1,6 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request, BackgroundTasks
+from fastapi import UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import deps
@@ -10,6 +11,7 @@ from app.models.user import User
 from app.services.auth import get_current_user
 from app.core.limiter import limiter  # Імпорт лімітеру з main.py
 from app.services.verify_email import send_verifying_email
+from app.services.upload_file import upload_service
 
 router = APIRouter()
 
@@ -25,6 +27,25 @@ async def read_users_me(
     Ліміт: 5 запитів на хвилину.
     """
     return current_user
+
+
+@router.patch("/avatar", response_model=UserResponse)
+async def update_avatar_user(
+    file: UploadFile = File(...), # Ми очікуємо файл
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(deps.get_db),
+):
+    """
+    Завантажує аватар користувача на Cloudinary і зберігає URL в БД.
+    """
+    # 1. Завантажуємо файл у хмару
+    # file.file - це бінарний потік, який очікує Cloudinary
+    avatar_url = upload_service.upload_file(file, current_user.username)
+
+    updated_user = await crud_users.update_avatar(db, current_user, avatar_url)
+
+    return updated_user
+
 
 # 1. GET (Read All)
 @router.get("/", response_model=List[UserResponse])
